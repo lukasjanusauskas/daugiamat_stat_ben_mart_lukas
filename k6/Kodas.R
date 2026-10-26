@@ -21,14 +21,12 @@ gdp_clean <- gdp_raw %>%
 
 
 ess_selected <- ess_raw %>%
-  select(cntry, stfgov, hinctnta, mbtru, polintr, agea) %>%
+  select(cntry, stfgov, hinctnta, polintr, agea) %>%
   mutate(
     stfgov       = as.numeric(stfgov),
     hinctnta     = as.numeric(hinctnta),
-    mbtru        = as.numeric(mbtru),
     polintr      = as.numeric(polintr),
     agea         = as.numeric(agea),
-    union_member = ifelse(mbtru == 1, 1, 0),
     # 1 = visai nesidomi, 4 = labai domisi politika
     pol_interest_num = 5 - polintr
   ) %>%
@@ -36,7 +34,6 @@ ess_selected <- ess_raw %>%
     !is.na(cntry) &
       !is.na(stfgov)           & stfgov <= 10 &
       !is.na(hinctnta)         & hinctnta <= 10 &
-      !is.na(mbtru)            & mbtru <= 3 &
       !is.na(pol_interest_num) & pol_interest_num >= 1 & pol_interest_num <= 4 &
       !is.na(agea)             & agea <= 110
   ) %>%
@@ -62,7 +59,7 @@ print(head(df_final))
 
 ## Aprašomoji statistika --------------
 vars_summary <- df_final %>%
-  select(stfgov, pol_interest, hinctnta, union_member, agea, gdp_pc_k) %>%
+  select(stfgov, pol_interest, hinctnta, agea, gdp_pc_k) %>%
   summary()
 print(vars_summary)
 
@@ -115,13 +112,9 @@ plot_data <- df_final %>%
 # ggsave("stfgov_presentation.png", plot = p_clean, width = 6.2, height = 6.0, dpi = 300)
 
 ## Pirmo lygmens koreliaciju matrica (naudojama skaitinė pol_interest versija)
-cor_vars <- df_final %>% select(pol_interest_num, hinctnta, union_member, agea)
+cor_vars <- df_final %>% select(pol_interest_num, hinctnta, agea)
 cor_mat <- cor(cor_vars, use = "complete.obs")
 print(round(cor_mat, 3))
-
-# P-reikšmės koreliacijoms patikrinti
-cat("\nKoreliacijos testas tarp hinctnta ir union_member:\n")
-print(cor.test(df_final$hinctnta, df_final$union_member))
 
 
 ## Besąlyginis modelis
@@ -170,21 +163,6 @@ AIC(m2)
 summary(m2)
 
 VarCorr(m2)
-
-
-## Modelis su sąveika, be union_member
-m3 <- lme(
-  fixed   = stfgov ~ pol_interest * gdp_pc_k + hinctnta + agea,
-  random  = ~ 1 + hinctnta + agea | cntry,
-  data    = df_final,
-  method  = "ML"
-)
-
-AIC(m3)
-summary(m3)
-
-# m3 neturi AIC suprasteja iki m1 - union_member neisimti
-
 
 
 ## Modelių palyginimas
