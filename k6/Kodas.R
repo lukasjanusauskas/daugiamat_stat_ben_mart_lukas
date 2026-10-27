@@ -116,6 +116,8 @@ cor_vars <- df_final %>% select(pol_interest_num, hinctnta, agea)
 cor_mat <- cor(cor_vars, use = "complete.obs")
 print(round(cor_mat, 3))
 
+cor.test(df_final$hinctnta, df_final$agea)
+
 
 ## Besąlyginis modelis
 m0 <- lme(
